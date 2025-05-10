@@ -48,7 +48,7 @@ func XOR(b1, b2 []byte) ([]byte, error) {
 }
 
 // Q3
-func ReadText(url string) map[byte]float64 {
+func ReadText(url string) []byte {
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -59,15 +59,15 @@ func ReadText(url string) map[byte]float64 {
 	if err != nil {
 		panic(err)
 	}
-	return ScoreCharacters(body)
+	return body
 }
 
-// func ReadText(name string) map[byte]float64 {
-// 	text, err := os.ReadFile(name)
+// func ReadText(fileName string) []byte {
+// 	text, err := os.ReadFile(fileName)
 // 	if err != nil {
 // 		fmt.Errorf("failed to open file: %w", err)
 // 	}
-// 	return ScoreCharacters(text)
+// 	return text
 // }
 
 func ScoreCharacters(text []byte) map[byte]float64 {
@@ -103,17 +103,36 @@ func SingleByteXOR(b []byte, key byte) []byte {
 
 }
 
-func FindKey(e []byte, f map[byte]float64) []byte {
+func FindKey(e []byte, f map[byte]float64) ([]byte, float64) {
 	var res []byte
 	var lastScore float64
 
-	for key := byte(0); key < 255; key++ {
+	for key := byte(0); key <= 255; key++ {
 		out := SingleByteXOR(e, key)
 		score := Score(out, f)
 		if score > lastScore {
 			res = out
 			lastScore = score
 		}
+		// for future me: the loop would (byte overflow) after 255 and reset to 0 causing an infinite loop.
+		if key == 255 {
+			break
+		}
+	}
+	return res, lastScore
+}
+
+// Problem #5
+
+func RepeatingKeyXOR(m []byte, key []byte) []byte {
+	res := make([]byte, len(m))
+	c := 0
+	for i, v := range m {
+		if c > 2 {
+			c = 0
+		}
+		res[i] = v ^ key[c]
+		c = c + 1
 	}
 	return res
 }
