@@ -2,11 +2,14 @@ package cryptopals
 
 import (
 	"bytes"
+	"crypto/cipher"
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/Fouz/cryptopals-challenge/types"
 )
 
 // Q1
@@ -135,4 +138,39 @@ func RepeatingKeyXOR(m []byte, key []byte) []byte {
 		c = c + 1
 	}
 	return res
+}
+
+// Problem #7
+func DecryptECB(s []byte, b cipher.Block) []byte {
+
+	dst := make([]byte, len(s))
+
+	// validate key size - https://pkg.go.dev/crypto/cipher#BlockMode
+	if len(s)%b.BlockSize() != 0 {
+		panic("ciphertext is not a multiple of the block size")
+	}
+	for i := 0; i < len(s); i += b.BlockSize() {
+		b.Decrypt(dst[i:], s[i:])
+	}
+	return dst
+}
+
+// Problem #8
+func DetectECB(src []byte, k int) bool {
+
+	// validate key size - https://pkg.go.dev/crypto/cipher#BlockMode
+	if len(src)%k != 0 {
+		panic("ciphertext is not a multiple of the block size")
+	}
+
+	ciphertext := types.NewSet[string]()
+
+	for i := 0; i < len(src); i += k {
+		res := string(src[i : i+k])
+		if ok := ciphertext.Contains(res); ok {
+			return true
+		}
+		ciphertext[res] = struct{}{}
+	}
+	return false
 }

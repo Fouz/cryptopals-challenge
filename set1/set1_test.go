@@ -2,12 +2,16 @@ package cryptopals
 
 import (
 	"bytes"
+	"crypto/aes"
+	"encoding/base64"
 	"encoding/hex"
 	"testing"
 )
 
-var englishText []byte = ReadText("https://gutenberg.org/cache/epub/98/pg98.txt")
-var scoredCharacter map[byte]float64 = ScoreCharacters(englishText)
+var (
+	englishText     []byte           = ReadText("https://gutenberg.org/cache/epub/98/pg98.txt")
+	scoredCharacter map[byte]float64 = ScoreCharacters(englishText)
+)
 
 func TestQ1(t *testing.T) {
 
@@ -101,8 +105,42 @@ func TestProblem5(t *testing.T) {
 	}
 }
 
-// helpr
+func TestProblem7(t *testing.T) {
+
+	encryptedText := ReadText("https://cryptopals.com/static/challenge-data/7.txt")
+	v, _ := base64.StdEncoding.DecodeString(string(encryptedText))
+
+	key := []byte("YELLOW SUBMARINE")
+	block, err := aes.NewCipher(key)
+
+	if err != nil {
+		panic(err)
+	}
+
+	res := DecryptECB(v, block)
+
+	t.Log(string(res))
+}
+
+func TestDetectECB(t *testing.T) {
+	txt := ReadText("https://cryptopals.com/static/challenge-data/8.txt")
+	splitTxt := bytes.Split(txt, []byte("\n"))
+	keySize := 16
+
+	var val string
+
+	for _, v := range splitTxt {
+		if ok := DetectECB(v, keySize); ok {
+			val = string(v)
+		}
+	}
+	t.Log(val)
+
+}
+
+// helper
 func DecodeHex(t *testing.T, s string) []byte {
+	t.Helper()
 	result, err := hex.DecodeString(s)
 	if err != nil {
 		t.Fatalf("failed to decode hex string %s:", s)
